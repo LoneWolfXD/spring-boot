@@ -21,9 +21,19 @@ public class LibraryController {
     }
 
     @GetMapping("/")
-    public String listBooks(Model model) {
-        List<Book> books = libraryService.getAllBooksWithAuthors();
-        model.addAttribute("books", books);
+    public String listBooks(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            Model model) {
+        
+        int pageSize = 5;
+        org.springframework.data.domain.Page<Book> bookPage = libraryService.getBooksPaginatedAndSearched(keyword, page, pageSize);
+        
+        model.addAttribute("books", bookPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", bookPage.getTotalPages());
+        model.addAttribute("keyword", keyword);
+        
         return "list";
     }
 
@@ -77,5 +87,11 @@ public class LibraryController {
         } catch (Exception e) {
             return "redirect:/edit-book/" + id + "?error=true";
         }
+    }
+
+    @PostMapping("/delete-book/{id}")
+    public String deleteBook(@PathVariable("id") Long id) {
+        libraryService.deleteBook(id);
+        return "redirect:/";
     }
 }
